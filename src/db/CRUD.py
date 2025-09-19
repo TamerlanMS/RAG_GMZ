@@ -1,182 +1,172 @@
+from __future__ import annotations
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Annotated
 
 import requests  # type: ignore
 from fastapi import Depends
-from pydantic import TypeAdapter
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.functions import now
 
-from src.common.Schemas.icecream_schemas import ProductSchema
 from src.common.logger import logger
 from src.common.vector_store import vector_store
-from src.db.database import engine, get_db
-from src.db.Models import Base, Product
+from src.db.database import Base, engine, get_db
+from src.db.Models.icecream_models import Product
 
+# ---------- служебные операции ----------
 
 def create_db() -> str:
-    """
-    Создает базу данных и таблицы, если они не существуют.
-    Если база уже существует, ничего не делает.
-
-    :return: Сообщение о результате операции
-    """
     try:
         Base.metadata.create_all(bind=engine)
     except Exception as exp:
         if "already exists" in str(exp):
             logger.info("Database already exists")
             return "Database already exists"
-        else:
-            logger.error("Failed to create database: %s", exp)
-            raise
+        raise
     else:
         return "Database created successfully"
 
-
 def drop_db() -> str:
-    """
-    Удаляет все таблицы из базы данных.
-
-    :return: Сообщение о результате операции
-    """
     try:
         Base.metadata.drop_all(bind=engine)
     except Exception as exp:
         if "does not exist" in str(exp):
             logger.info("Database does not exist")
             return "Database does not exist"
-        else:
-            logger.error("Failed to drop database: %s", exp)
-            raise
+        raise
     else:
         return "Database dropped successfully"
 
+# ---------- загрузка/парсинг JSON ----------
 
 def __get_json_from_url(
     address: str,
-    params: Optional[Dict[Any, Any]] = None,
-    headers: Optional[Dict[Any, Any]] = None,
+    params: Optional[Dict[str, Any]] = None,
+    headers: Optional[Dict[str, Any]] = None,
 ) -> Any:
-    """
-    Отправляет GET-запрос по указанному URL и возвращает ответ в формате JSON.
+    resp = requests.get(address, params=params, headers=headers, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
 
-    :param address: URL для запроса
-    :param params: (опционально) параметры запроса
-    :param headers: (опционально) заголовки запроса
-    :return: Ответ в формате dict (JSON)
-    :raises: requests.RequestException, ValueError
-    """
-    response = requests.get(address, params=params, headers=headers)
-    response.raise_for_status()  # выбросит исключение, если код ответа не 2xx
-    return response.json()
-
-
-def __get_products_from_json(
-    json_data: Optional[Dict[Any, Any]],
-) -> List[ProductSchema]:
-    """
-    Получает список PharmacyProductSchema из JSON-данных.
-    :param json_data: Словарь с ключом "Products", содержащим список продуктов
-    :return: Список PharmacyProductSchema
-    """
-    if not json_data:
-        raise ValueError(
-            "JSON data is required. Please provide a valid JSON dictionary."
-        )
-    products = TypeAdapter(List[ProductSchema]).validate_python(
-        json_data["Products"]
-    )
+def __extract_products_array(json_data: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if not json_data or "Products" not in json_data:
+        raise ValueError("Expected JSON object with key 'Products'")
+    products = json_data["Products"]
+    if not isinstance(products, list):
+        raise ValueError("'Products' must be an array")
     return products
 
+def __parse_flat_products(products: List[Dict[str, Any]]) -> List[Tuple[Optional[str], str, str]]:
+    """
+    -> [(external_id|None, name, price_str)] без преобразования цены.
+    """
+    out: List[Tuple[Optional[str], str, str]] = []
+    for it in products:
+        if not isinstance(it, dict):
+            continue
+        ext_id = (str(it.get("id", "")).strip() or None)
+        name = str(it.get("name", "")).strip()
+        price = str(it.get("price", "")).strip()
+        if not name or price == "":
+            continue
+        out.append((ext_id, name, price))
+    if not out:
+        raise ValueError("No valid items in 'Products'")
+    return out
+
+# ---------- публичный импорт ----------
 
 def update_db(
     db: Annotated[Session, Depends(get_db)],
     json_url: str = "https://ts23.cloud1c.pro/FileGPT/GMZProducts.json",
-    json_data: Optional[Dict[Any, Any]] = None,
+    json_data: Optional[Dict[str, Any]] = None,
 ) -> int:
-    # """
-    # Обновляет базу данных с bulk-операциями для ускорения массовой загрузки.
-    #
-    # :param json_url: URL с JSON-данными
-    # :param json_data: (опционально) JSON-данные
-    # :param db: SQLAlchemy session
-    # :return: Количество добавленных записей
-    # """
-    # if not json_data:
-    #     json_data = __get_json_from_url(json_url)
-    # pydantic_list_of_products = __get_products_from_json(json_data)
-    # counter = 0
-    #
-    # # Загружаем все существующие продукты и аптеки в память через scalars
-    # products = db.scalars(select(Product)).all()
-    # existing_products = {p.name: p.id for p in products}
-    #
-    # # Собираем новые продукты, исключая дубликаты внутри пачки
-    # new_product_names = set()
-    # new_products = []
-    # for item in pydantic_list_of_products:
-    #     p_name = item.product.name
-    #     if p_name not in existing_products and p_name not in new_product_names:
-    #         new_products.append(Product(name=p_name))
-    #         new_product_names.add(p_name)
-    #
-    # # Bulk insert новых продуктов и аптек
-    # if new_products:
-    #     db.bulk_save_objects(new_products)
-    # db.commit()
-    #
-    # # Обновим словари id через scalars
-    # products = db.scalars(select(Product)).all()
-    # existing_products = {p.name: p.id for p in products}
+    """
+    Ожидает формат:
+    { "Date": "...", "Products": [ { "id": "...", "name": "...", "price": "..." }, ... ] }
+    Upsert по external_id (если есть) иначе по name. price сохраняется как строка.
+    """
+    data = json_data if json_data is not None else __get_json_from_url(json_url)
+    items = __parse_flat_products(__extract_products_array(data))
 
+    by_ext: Dict[str, Tuple[str, str]] = {}
+    by_name: Dict[str, Tuple[str, str]] = {}
+    for ext_id, name, price in items:
+        if ext_id:
+            by_ext[ext_id] = (name, price)
+        else:
+            by_name[name] = (name, price)
+
+    inserted = updated = 0
+    to_insert: List[Product] = []
+
+    # existing by external_id
+    if by_ext:
+        ext_ids = list(by_ext.keys())
+        rows_ext = db.execute(
+            select(Product.id, Product.external_id).where(Product.external_id.in_(ext_ids))
+        ).all()
+        existing_by_ext = {row.external_id: row.id for row in rows_ext}  # type: ignore[attr-defined]
+        for ext_id, (name, price) in by_ext.items():
+            pid = existing_by_ext.get(ext_id)
+            if pid:
+                db.execute(update(Product).where(Product.id == pid).values(name=name, price=price))
+                updated += 1
+            else:
+                to_insert.append(Product(external_id=ext_id, name=name, price=price))
+                inserted += 1
+    else:
+        existing_by_ext = {}
+
+    # existing by name (for items w/o external_id)
+    if by_name:
+        names = list(by_name.keys())
+        rows_name = db.execute(
+            select(Product.id, Product.name).where(Product.name.in_(names))
+        ).all()
+        existing_by_name = {row.name: row.id for row in rows_name}  # type: ignore[attr-defined]
+        for name, (name_val, price) in by_name.items():
+            pid = existing_by_name.get(name)
+            if pid:
+                db.execute(update(Product).where(Product.id == pid).values(price=price))
+                updated += 1
+            else:
+                to_insert.append(Product(external_id=None, name=name_val, price=price))
+                inserted += 1
+
+    if to_insert:
+        db.bulk_save_objects(to_insert)
+    db.commit()
+
+    total = inserted + updated
+    logger.info("update_db: inserted=%s, updated=%s, total=%s", inserted, updated, total)
+
+    # опционально — пересборка вектора по понедельникам 08–09
+    now = datetime.now()
     if now.weekday() == 0 and (8 <= now.hour <= 9):
-        logger.info("Starting to rebuild vector store")
-        status_update = update_vector_store()
-        logger.info("Vector store rebuilt status: %s", status_update)
+        try:
+            names_all = get_all_products()
+            msg = vector_store.rebuild_vector_store(products_names=names_all)
+            logger.info("Vector store rebuilt: %s", msg)
+        except Exception as e:
+            logger.warning("Vector store rebuild failed: %s", e)
 
-    return counter
+    return total
 
+# ---------- утилиты ----------
 
-def get_product_price(product_name: str, pharmacy_address: str) -> Any:
-    """
-    Поиск цены продукта в конкретной аптеке
-    :param product_name: Название продукта
-    :param pharmacy_address: Адрес аптеки
-    :return: Цена продукта или None, если не найдено
-    """
+def get_products_by_name(product_name: str) -> List[str]:
     db = next(get_db())
-    product = db.scalar(select(Product).where(Product.name.ilike(f"%{product_name}%")))
-    if not product:
-        return None
+    rows = db.execute(
+        select(Product.name).where(Product.name.ilike(f"%{product_name}%"))
+    ).all()
+    return [r[0] for r in rows]
 
-    return product.price
-
-
-def get_products_by_name(product_name: str) -> Optional[List[str]]:
+def get_product_price(product_name: str) -> Optional[str]:
     db = next(get_db())
-    products = db.scalars(
-        select(Product).where(Product.name.ilike(f"%{product_name.lower()}%"))
-    )
-    if products:
-        return [product.name for product in products]
-    return None
+    row = db.execute(select(Product.price).where(Product.name == product_name)).first()
+    return row[0] if row else None
 
-
-def get_all_products() -> Optional[List[str]]:
+def get_all_products() -> List[str]:
     db = next(get_db())
-    products = db.scalars(select(Product)).all()
-    if products:
-        return [product.name for product in products]
-    return None
-
-
-def update_vector_store() -> Any:
-    products_names = get_all_products()
-    if products_names:
-        status_message = vector_store.rebuild_vector_store(
-            products_names=products_names
-        )
-        return status_message
-    return "No products found"
+    rows = db.execute(select(Product.name)).all()
+    return [r[0] for r in rows]

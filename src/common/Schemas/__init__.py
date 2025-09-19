@@ -1,15 +1,7 @@
-from src.common.Schemas.icecream_schemas import (
-    Client,
-    ItemOrder,
-    Order,
-    ProductSchema,
-    IceCreamProductSchema,
-)
+from .icecream_schemas import ItemOrder, Order
+
 
 __all__ = [
-    "Client",
     "ItemOrder",
     "Order",
-    "IceCreamProductSchema",
-    "ProductSchema",
 ]
