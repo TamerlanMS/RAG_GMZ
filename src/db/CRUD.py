@@ -1,10 +1,12 @@
 from __future__ import annotations
 from datetime import datetime
+from difflib import SequenceMatcher
 from typing import Any, Dict, List, Optional, Tuple, Annotated
 
+import re
 import requests  # type: ignore
 from fastapi import Depends
-from sqlalchemy import select, update
+from sqlalchemy import select, update, or_
 from sqlalchemy.orm import Session
 
 from src.common.logger import logger
@@ -153,6 +155,34 @@ def update_db(
     return total
 
 # ---------- утилиты ----------
+MIN_TOKEN_LEN = 3
+
+def _tokenize(q: str) -> List[str]:
+    return [t for t in re.split(r"[^\wА-Яа-яЁё]+", q.lower()) if len(t) >= MIN_TOKEN_LEN]
+
+def _best_match(query: str, candidates: List[Product]) -> Optional[Product]:
+    if not candidates:
+        return None
+    scored = [(SequenceMatcher(None, query.lower(), p.name.lower()).ratio(), p) for p in candidates]
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return scored[0][1]
+
+def find_product_best(db: Session, query: str) -> Optional[Product]:
+    p = db.scalar(select(Product).where(Product.name.ilike(f"%{query}%")))
+    if p:
+        return p
+    tokens = _tokenize(query)
+    if tokens:
+        q = select(Product)
+        for t in tokens:
+            q = q.where(Product.name.ilike(f"%{t}%"))
+        hits = db.scalars(q).all()
+        if hits:
+            return _best_match(query, hits)
+        hits = db.scalars(select(Product).where(or_(*[Product.name.ilike(f"%{t}%") for t in tokens]))).all()
+        if hits:
+            return _best_match(query, hits)
+    return None
 
 def get_products_by_name(product_name: str) -> List[str]:
     db = next(get_db())
@@ -160,6 +190,12 @@ def get_products_by_name(product_name: str) -> List[str]:
         select(Product.name).where(Product.name.ilike(f"%{product_name}%"))
     ).all()
     return [r[0] for r in rows]
+
+def get_product_price_by_name(db: Session, product_name: str) -> Optional[dict]:
+    p = find_product_best(db, product_name)
+    if not p:
+        return None
+    return {"name": p.name, "external_id": p.external_id, "price": p.price}
 
 def get_product_price(product_name: str) -> Optional[str]:
     db = next(get_db())

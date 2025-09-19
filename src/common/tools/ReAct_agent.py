@@ -13,7 +13,8 @@ from langgraph.prebuilt import ToolNode
 from src.common.llm_model import LLM
 from src.common.Schemas.icecream_schemas import ItemOrder, Order
 from src.common.vector_store import vector_store
-from src.db.CRUD import get_product_price, get_products_by_name
+from src.db.CRUD import get_product_price, get_products_by_name, get_product_price_by_name
+from src.db.database import get_db
 from src.settings.config import AGENT_PROMPT
 
 load_dotenv()
@@ -53,10 +54,14 @@ def find_product_in_vector_store(product_name: str) -> Any:
         return vector_store.search(product_name)
     return db_search_result
 
-@tool  # type: ignore
-def get_current_price(product_name: str) -> Any:
-    """Получить текущую цену товара по точному названию."""
-    return get_product_price(product_name)
+@tool
+def get_current_price(product_name: str):
+    """
+    Верни текущую цену товара по названию (поиск нечувствителен к регистру и неполному совпадению).
+    Возвращает: {"name": "...", "external_id": "...", "price": ...} или None.
+    """
+    db = next(get_db())
+    return get_product_price_by_name(db, product_name)
 
 @tool(parse_docstring=True, args_schema=Order)  # type: ignore
 def create_order(
@@ -67,7 +72,7 @@ def create_order(
     items: List[ItemOrder],
 ) -> str:
     """
-    Сформировать текст заказа (без аптек).
+    Сформировать текст заказа.
     Требуются: Имя клиента, Телефон, Адрес доставки, Способ оплаты, Список позиций.
     """
     total = 0.0
