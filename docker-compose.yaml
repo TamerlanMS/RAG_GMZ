@@ -39,7 +39,7 @@ services:
   api:
     build: .
     ports:
-      - "82:8000"
+      - "80:8000"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PINECONE_API_KEY=${PINECONE_API_KEY}
