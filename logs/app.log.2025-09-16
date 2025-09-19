@@ -1,0 +1,9 @@
+[2025-09-16 14:12:50.061] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=37250) GET to http://localhost:81/api/v1/ask_llm
+[2025-09-16 14:23:17.972] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=60014) GET to http://localhost:81/api/v1/ask_llm
+[2025-09-16 14:24:50.482] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=53416) GET to http://localhost:81/api/v1/ask_llm
+[2025-09-16 14:25:25.628] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=58456) GET to http://localhost:81/api/v1/ask_llm
+[2025-09-16 14:26:01.301] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=57870) GET to http://localhost:81/api/v1/ask_llm
+[2025-09-16 14:26:28.852] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=50432) GET to http://localhost:81/api/v1/ask_llm
+[2025-09-16 14:26:52.910] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=40262) GET to http://localhost:81/api/v1/ask_llm
+[2025-09-16 14:27:20.753] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=52458) GET to http://localhost:81/api/v1/ask_llm
+[2025-09-16 18:03:15.791] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=50380) GET to http://localhost:81/api/v1/ask_llm

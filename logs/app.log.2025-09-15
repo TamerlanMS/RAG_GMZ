@@ -1,0 +1,6 @@
+[2025-09-15 14:15:02.255] INFO     endpoints:23   - Starting app .....
+[2025-09-15 14:20:53.020] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=44112) GET to http://localhost:81/api/v1/ask_llm
+[2025-09-15 14:21:08.784] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=38612) POST to http://localhost:81/api/v1/update_DB
+[2025-09-15 14:23:33.273] INFO     endpoints:23   - Starting app .....
+[2025-09-15 14:24:01.068] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=36506) POST to http://localhost:81/api/v1/create_DB
+[2025-09-15 14:39:28.577] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=60160) GET to http://localhost:81/api/v1/ask_llm

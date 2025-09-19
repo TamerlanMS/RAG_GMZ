@@ -1,0 +1,5 @@
+[2025-09-12 00:13:32.580] INFO     endpoints:55   - Starting app .....
+[2025-09-12 00:31:18.825] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=33224) GET to http://localhost:8081/api/v1/ask_llm
+[2025-09-12 00:35:21.375] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=52240) GET to http://localhost:8081/api/v1/ask_llm
+[2025-09-12 00:35:53.506] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=54410) GET to http://localhost:8081/api/v1/ask_llm
+[2025-09-12 00:36:01.125] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=44734) GET to http://localhost:8081/api/v1/ask_llm

@@ -1,0 +1,14 @@
+[2025-09-14 15:00:45.576] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=47046) GET to http://localhost:8081/api/v1/ask_llm
+[2025-09-14 15:01:04.644] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=47548) GET to http://localhost:8081/api/v1/ask_llm
+[2025-09-14 15:01:25.190] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=45388) GET to http://localhost:8081/api/v1/ask_llm
+[2025-09-14 15:04:53.621] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=53960) POST to http://localhost:8081/api/v1/update_DB
+[2025-09-14 15:05:53.002] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=41450) POST to http://localhost:8081/api/v1/update_DB
+[2025-09-14 15:06:21.568] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=51484) POST to http://localhost:8081/api/v1/update_DB
+[2025-09-14 15:12:37.111] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=37764) POST to http://localhost:8081/api/v1/update_DB
+[2025-09-14 15:12:43.556] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=59432) POST to http://localhost:8081/api/v1/update_DB
+[2025-09-14 15:12:51.108] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=59450) POST to http://localhost:8081/api/v1/update_DB
+[2025-09-14 15:19:03.081] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=56114) POST to http://localhost:8081/api/v1/update_DB
+[2025-09-14 15:28:36.208] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=36478) POST to http://localhost:8081/api/v1/update_DB
+[2025-09-14 15:29:16.130] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=46770) POST to http://localhost:8081/api/v1/update_DB
+[2025-09-14 16:18:37.336] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=52322) POST to http://localhost:8081/api/v1/update_DB
+[2025-09-14 16:20:03.412] INFO    middleware_register:59   - Request from Address(host='172.18.0.1', port=58530) POST to http://localhost:8081/api/v1/update_DB
