@@ -18,6 +18,7 @@ class ItemOrder(BaseModel):
 
 class Order(BaseModel):
     """Данные для формирования заказа (без аптек)."""
+    order_data: str = Field(..., description="Дата доставки")
     client_name: str = Field(..., description="Имя клиента")
     client_number: str = Field(..., description="Телефон клиента в формате +7XXXXXXXXXX")
     delivery_address: str = Field(..., description="Адрес доставки")

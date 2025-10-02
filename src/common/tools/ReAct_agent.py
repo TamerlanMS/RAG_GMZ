@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from itertools import count
 from typing import Annotated, Any, List, Optional, Sequence, TypedDict
 
 from dotenv import load_dotenv
@@ -65,6 +66,7 @@ def get_current_price(product_name: str):
 
 @tool(parse_docstring=True, args_schema=Order)  # type: ignore
 def create_order(
+    order_data: str,
     client_name: str,
     client_number: str,
     delivery_address: str,
@@ -73,18 +75,23 @@ def create_order(
 ) -> str:
     """
     Сформировать текст заказа.
-    Требуются: Имя клиента, Телефон, Адрес доставки, Способ оплаты, Список позиций.
+    Требуются: Дата доставки, Имя клиента, Телефон, Адрес доставки, Способ оплаты, Список позиций.
     """
     total = 0.0
     lines: List[str] = []
+    count = 1
     for it in items:
         line_total = float(it.quantity) * float(it.price)
         total += line_total
-        lines.append(f"- {it.name} x{it.quantity} = {line_total:.2f}")
+        lines.append(f"№{count}. {it.name} x{it.quantity} = {line_total:.2f}")
+        count += 1
 
     lines_str = "\n".join(lines)
+    date_str = order_data or "не указана"
+
     return (
         "Ваш заказ:\n"
+        f"Дата доставки: {date_str}\n"
         f"Имя клиента: {client_name}\n"
         f"Номер клиента: {client_number}\n"
         f"Адрес доставки: {delivery_address}\n"
