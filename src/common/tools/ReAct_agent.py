@@ -95,7 +95,6 @@ def create_order(
         f"Имя клиента: {client_name}\n"
         f"Номер клиента: {client_number}\n"
         f"Адрес доставки: {delivery_address}\n"
-        f"Метод оплаты: {payment}\n\n"
         f"Товары:\n{lines_str}\n\n"
         f"Итого: {total:.2f}\n"
     )
