@@ -70,7 +70,6 @@ def create_order(
     client_name: str,
     client_number: str,
     delivery_address: str,
-    payment: str,
     items: List[ItemOrder],
 ) -> str:
     """
