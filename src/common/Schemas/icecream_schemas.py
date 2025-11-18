@@ -22,5 +22,4 @@ class Order(BaseModel):
     client_name: str = Field(..., description="Имя клиента")
     client_number: str = Field(..., description="Телефон клиента в формате +7XXXXXXXXXX")
     delivery_address: str = Field(..., description="Адрес доставки")
-    payment: str = Field(..., description="Способ оплаты")
     items: List[ItemOrder] = Field(..., min_items=1, description="Список позиций")
