@@ -62,7 +62,7 @@ class LLMSettings(OpenAIModel):
 class PineconeSettings(BaseModel):
     dimension: int = Field(default=1536, description="Размерность эмбеддинга")
     index_name: str = Field(
-        default="salamat-names", description="Название индекса в Pinecone"
+        default="gmz-names", description="Название индекса в Pinecone"
     )
     index_host: str = Field(
         default="https://gmz-names-rkhbx77.svc.aped-4627-b74a.pinecone.io",
